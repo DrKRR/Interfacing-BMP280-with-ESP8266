@@ -1,0 +1,91 @@
+/* PROGRAM TO DISPLAY AMBIENT TEMPERATURE, BAROMETRIC PRESSURE AND ALTIMETER */
+
+
+
+/*  Include Header files supporting : I2C, Adafruit OLED driver and graphics, Adafruit BMP280 and sensor */
+/*  I2C addresses:-  0.96” OLED with SSD1306 driver: 0x3C; BMP280:  0x76 */
+
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BMP280.h>
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+#define OLED_RESET LED_BUILTIN 
+#define Sea_Level_Press_hPa (1013.25)
+
+//char PRESSURE[4];
+//char TEMPERATURE[4];
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire,OLED_RESET);
+Adafruit_BMP280 bmp;
+
+void setup() {
+ Serial.begin(74880); // This baud rate displays properly the post RESET steps of ESP8266
+ delay(100);
+ 
+ if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+ Serial.println(F("SSD1306 allocation failed"));
+ for(;;);
+ }
+ delay(2000);
+ 
+ bool status = bmp.begin(0x76); 
+ if (!status) {
+ Serial.println("Could not find a valid BMP280 sensor, check wiring!");
+ display.clearDisplay();
+ display.setCursor(0,0);
+ display.setTextSize(1);
+ display.setTextColor(WHITE);
+ display.println("ERROR");
+ display.display(); 
+ while (1);
+ }
+ delay(2000);
+ display.clearDisplay();
+ display.setTextColor(WHITE);
+}
+
+void loop() {
+ //display.clearDisplay();
+ // display temperature
+ display.setTextSize(1);
+ display.setCursor(0,0);
+ display.print("Temperature: ");
+ display.setTextSize(1);
+ display.setCursor(0,10);
+ display.print(String(bmp.readTemperature()));
+ display.print(" ");
+ display.setTextSize(1);
+ display.cp437(true);
+ display.write(167);
+ display.setTextSize(1);
+ display.print(" C");
+ delay(1000);
+ 
+ // display presssure
+ display.setTextSize(1);
+ display.setCursor(0, 20);
+ display.print("Pressure: ");
+ display.setTextSize(1);
+ display.setCursor(0, 30);
+ display.print(String(bmp.readPressure()/100.0F));
+ display.print(" hPa"); 
+ display.display();
+ delay(1000);
+
+ //display altitude
+ display.setTextSize(1);
+ display.setCursor(0, 40);
+ display.print("Altiitude: ");
+ display.setTextSize(1);
+ display.setCursor(0, 50);
+ display.print(String(bmp.readAltitude(Sea_Level_Press_hPa)));
+ display.print(" m"); 
+ display.display();
+ delay(1000);
+
+ display.clearDisplay();
+}
